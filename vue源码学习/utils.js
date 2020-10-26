@@ -190,3 +190,78 @@ export const hyphenate = cached(str, () => {
 // 什么也不干
 
 export function noop (a, b, c) {}
+
+export const no = (a, b, c) => false
+
+// 返回相同的值
+
+export const identity = (_) => _
+
+// 生成静态键的字符串
+
+export function genStaticKeys(modules) {
+    return modules.reduce((keys, m) => {
+        return keys.concat(m, staticKeys || [])
+    }, []).join(',')
+}
+
+// 判断两个对象是否相同
+// 1.首先判断是否是基本类型 如果是基本类型的话 直接就是相等的
+// 2.判断a和b是不是都是对象 如果是 则继续 如果不是则 返回他们的string类型是否相同 如果不是则返回false
+// 3.如果是对象 则还需要判断是不是数组
+// 4.如果是数组的话 判断是否长度一致 如果不一致 则直接返回false
+// 5.如果长度一致 则需要进行递归
+// 6.最后返回是否相同
+
+export function looseEqual(a, b) {
+    // 基本类型 直接返回true
+    if (a === b) {
+        return true
+    }
+    // isObject 是判断a和b是否是对象 返回布尔值
+    const isObjectA = isObject(a);
+    const isObjectB = isObject(b);
+
+    if(isObjectA && isObjectB) {
+        try {
+            const isArrayA = Array.isArray(a)
+            const isArrayB = Array.isArray(b)
+            if (isArrayA && isArrayB) {
+                return a.length === b.length && a.every(key => {
+                    return looseEqual(a[key], b[key])
+                })
+            } else {
+                return false
+            }
+        } catch(e) {
+            return false
+        }
+    } else if (!isObjectB && !isObjectA) {
+        return String(a) === String(b)
+    } else {
+        return false
+    }
+}
+
+// 判断我们传入的值是否在数组中 有相同的值
+// 我们会循环遍历我们数组中每一项是否与我们传入的值相同 如果相同返回的是相同的下标位置
+// 如果同则返回-1 有点类似
+
+export function loossIndexOf(arr, val) {
+    for(let i = 0; i < arr.length; i++ ) {
+        if (looseEqual(arr[i], val)) return i
+    }
+    return -1
+}
+
+// 实现一个只执行一次的函数 有点类似我们的防抖
+
+export function once(fn) {
+    let called = fasle
+    return function() {
+        if(!called) {
+            called = true
+            fn.apply(this, arguments)
+        }
+    }
+}
